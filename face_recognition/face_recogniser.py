@@ -1,19 +1,23 @@
 from collections import namedtuple
 import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
 
 Prediction = namedtuple('Prediction', 'label confidence')
 Face = namedtuple('Face', 'top_prediction bb all_predictions')
 BoundingBox = namedtuple('BoundingBox', 'left top right bottom')
 
+
 def top_prediction(idx_to_class, probs):
     top_label = probs.argmax()
     return Prediction(label=idx_to_class[top_label], confidence=probs[top_label])
 
+
 def to_predictions(idx_to_class, probs):
     return [Prediction(label=idx_to_class[i], confidence=prob) for i, prob in enumerate(probs)]
 
+
 class FaceRecogniser:
-    def __init__(self, feature_extractor, classifier, idx_to_class, class_centers=None, unknown_threshold=0.8): ################################################################################
+    def __init__(self, feature_extractor, classifier, idx_to_class, class_centers=None, unknown_threshold=0.8):
         self.feature_extractor = feature_extractor
         self.classifier = classifier
         self.idx_to_class = idx_to_class
@@ -25,7 +29,7 @@ class FaceRecogniser:
             return False  # Skip anomaly detection if no class centers are provided.
 
         distances = {
-            label: np.linalg.norm(embedding - center)
+            label: 1 - cosine_similarity(embedding.reshape(1, -1), center.reshape(1, -1))[0, 0]
             for label, center in self.class_centers.items()
         }
 
